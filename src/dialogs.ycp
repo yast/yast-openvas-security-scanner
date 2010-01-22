@@ -1,0 +1,232 @@
+/* ------------------------------------------------------------------------------
+ * Copyright (c) 2006 Novell, Inc. All Rights Reserved.
+ *
+ *
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of version 2 of the GNU General Public License as published by the
+ * Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, contact Novell, Inc.
+ *
+ * To contact Novell about this file by physical or electronic mail, you may find
+ * current contact information at www.novell.com.
+ * ------------------------------------------------------------------------------
+ */
+
+/**
+ * File:	include/openvas-security-scanner/dialogs.ycp
+ * Package:	Configuration of openvas-security-scanner
+ * Summary:	Dialogs definitions
+ * Authors:	Felix Wolfsteller <felix.wolfsteller@intevation.de>
+ *
+ * $**Id$
+ */
+
+{
+
+textdomain "openvas-security-scanner";
+
+import "Label";
+import "Wizard";
+import "OpenvasSecurityScanner";
+
+include "openvas-security-scanner/helps.ycp";
+
+/**
+ * OpenVAS Scan-Server Configuration Dialog
+ *
+ * @return any dialog result
+ */
+any ScannerConfigurationDialog () {
+    string caption = _("OpenVAS Security Scanner Configuration");
+
+    boolean no_feed_selected = (OpenvasSecurityScanner::feed_choice == nil ||
+                                OpenvasSecurityScanner::feed_choice == "No Feed" ||
+                                OpenvasSecurityScanner::feed_choice == "");
+
+    term radio_group = `VBox ();
+    radio_group = add (radio_group, `Left(
+                                        `RadioButton(`id(`no_feed), _("&Disable OpenVAS Security Scanner"), no_feed_selected) ));
+
+    radio_group = add (radio_group, `Left(
+                                        `RadioButton(`id(`onf), _("Enable and use &OpenVAS NVT Feed"), (OpenvasSecurityScanner::feed_choice == "OpenVAS NVT Feed")) ));
+
+    // Disable the Greenbone Security Feed option if the GSF scripts are not installed / activated
+    if (OpenvasSecurityScanner::IsGSFInstalled ())
+    {
+        radio_group = add (radio_group, `Left(`RadioButton(`id(`gsf), _("Enable and use &Greenbone Security Feed"), (OpenvasSecurityScanner::feed_choice == "Greenbone Security Feed")) ));
+    }
+    else
+    {
+        radio_group = add (radio_group, `Left(`RadioButton(`id(`gsf), `opt(`disabled), _("Enable and use &Greenbone Security Feed"), false) ));
+    }
+
+    term radio_box = `RadioButtonGroup (`id(`feed), `HVSquash(radio_group));
+
+    term gsf_box = `VBox ();
+    if (OpenvasSecurityScanner::IsGSFInstalled ())
+    {
+        gsf_box = add (gsf_box, `PushButton(`id(`activate_gsf),   `opt(`notify, `disabled), _("&Activate Greenbone Security Feed Subscription")));
+        gsf_box = add (gsf_box, `PushButton(`id(`deactivate_gsf), `opt(`notify),            _("D&eactivate Greenbone Security Feed Subscription")));
+    }
+    else
+    {
+        gsf_box = add (gsf_box, `PushButton(`id(`activate_gsf),   `opt(`notify),            _("&Activate Greenbone Security Feed Subscription")));
+        gsf_box = add (gsf_box, `PushButton(`id(`deactivate_gsf), `opt(`notify, `disabled), _("D&eactivate Greenbone Security Feed Subscription")));
+    }
+
+    // Disable the "Sync Now" button if no feed is selected / the OpenVAS service is disabled.
+    term sync_now_button = (no_feed_selected) ? `PushButton(`id(`feedsync_now), `opt(`disabled), _("&Synchronize with Feed now"))
+                                              : `PushButton(`id(`feedsync_now), `opt(`notify),   _("&Synchronize with Feed now"));
+
+    integer w = 38;
+    term contents = `VBox (`Frame ("Security Scanner Service",        `MinSize (w, 0, radio_box)), `VSpacing (1),
+                           `Frame ("Professional Feed Subscriptions", `MinSize (w, 0, gsf_box)), `VSpacing (1),
+                           `Frame ("Manual Feed Management",          `MinSize (w, 0, `VBox (sync_now_button))));
+
+    Wizard::SetContentsButtons (caption, contents,
+                               HELPS["configuration"]:"",
+                               Label::BackButton (), Label::FinishButton ());
+    Wizard::DisableBackButton();
+
+    any ret = nil;
+    while (true) {
+        ret = UI::UserInput ();
+
+        /* Abort? */
+        if (ret == `abort)
+        {
+            if (OpenvasSecurityScanner::Abort ()) break;
+            else continue;
+        }
+        /* Next */
+        else if (ret == `next)
+        {
+            ret = UI::QueryWidget (`id(`feed), `CurrentButton);
+            string choice = "";
+            if (ret == `no_feed)
+               choice = "No Feed";
+            else if (ret == `onf)
+               choice = "OpenVAS NVT Feed";
+            else if (ret == `gsf)
+               choice = "Greenbone Security Feed";
+
+            /* Check whether the feed-choice changed, do nothing if so */
+            if (OpenvasSecurityScanner::feed_choice == choice)
+              ret = `write;
+            else
+            {
+                OpenvasSecurityScanner::feed_choice = choice;
+                if (choice == "No Feed")
+                {
+                    ret = `no_feed;
+                }
+                else
+                {
+                    ret = `fetch_new;
+                }
+            }
+            break;
+        
+        }
+        /* Do a feed sync */
+        else if (ret == `feedsync_now)
+        {
+            break;
+        }
+        /* Activate GSF */
+        else if (ret == `activate_gsf)
+        {
+            break;
+        }
+        /* Deactivate GSF */
+        else if (ret == `deactivate_gsf)
+        {
+            OpenvasSecurityScanner::feed_choice = "No Feed";
+            break;
+        }
+        /* Unknown */
+        else
+        {
+            y2error("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    Wizard::RestoreBackButton ();
+
+    return ret;
+}
+
+/**
+ * Dialog to enter the location of the Greenbone Security Feed (key) files and scripts
+ *
+ * @return any dialog result
+ */
+any EnterGSFLocationDialog () {
+    string caption = _("Greenbone Security Feed installation");
+
+
+    term contents = `VBox (`InputField(`id(`gsf_location), _("Path to directory containing the Greenbone Security Feed Files"), ""));
+
+    Wizard::SetContentsButtons (caption, contents, 
+                                HELPS["activategsf"]:"",
+                                Label::BackButton(), Label::NextButton());
+    Wizard::DisableBackButton ();
+
+    any ret = nil;
+    while (true) {
+        ret = UI::UserInput ();
+        if (ret == `abort)
+        {
+            break;
+        }
+        else if (ret == `next)
+        {
+           /*  Assuming location is correct */
+           any text = UI::QueryWidget(`id(`gsf_location), `Value);
+           OpenvasSecurityScanner::gsf_location = (string) text;
+           break;
+        }
+        else
+        {
+            y2error ("unexpected retcode: %1", ret);
+            continue;
+        }
+    }
+
+    Wizard::RestoreBackButton ();
+    return ret;
+}
+
+/**
+ * Dialog showing progress of disabling the OpenVAS Security Scanner Service.
+ *
+ * @return any dialog result
+ */
+any DisableOpenVASDialog () {
+   Wizard::RestoreHelp (HELPS["disableopenvas"]:"");
+   boolean ret = OpenvasSecurityScanner::DisableOpenVAS ();
+   return ret ? `next : `abort;
+}
+
+/**
+ * Dialog showing progress of deactivating the Greenbone Security Feed.
+ *
+ * @return any dialog result
+ */
+any DeactivateGSFDialog () {
+   Wizard::RestoreHelp (HELPS["deactivategsf"]:""); /** TODO help */
+   boolean ret = OpenvasSecurityScanner::DeactivateGSF ();
+   return ret ? `next : `abort;
+}
+
+
+/* EOF */
+}
+
