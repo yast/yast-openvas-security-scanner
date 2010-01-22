@@ -24,8 +24,7 @@ Summary:	Configuration of openvas-security-scanner
 %dir @yncludedir@/openvas-security-scanner
 @yncludedir@/openvas-security-scanner/*
 @clientdir@/openvas-security-scanner.ycp
-@clientdir@/openvas-security-scanner_*.ycp
 @moduledir@/OpenvasSecurityScanner.*
-@moduledir@/OpenvasSecurityScanner2.*
 @desktopdir@/openvas-security-scanner.desktop
+@scrconfdir@/*
 %doc @docdir@

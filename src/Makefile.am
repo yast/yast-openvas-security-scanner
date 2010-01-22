@@ -15,9 +15,7 @@ desktop_DATA =			\
 	openvas-security-scanner.desktop
 
 module_DATA =			\
-	OpenvasSecurityScanner.ycp		\
-	OpenvasSecurityScanner2.pm		\
-	OpenvasSecurityScanner3.py
+	OpenvasSecurityScanner.ycp
 
 # create a symlink for local build, #145327
 openvas-security-scanner:
