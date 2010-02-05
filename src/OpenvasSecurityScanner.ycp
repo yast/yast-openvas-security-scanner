@@ -121,6 +121,20 @@ boolean CleanNVTDir () {
 
 
 /**
+ * Checks /var/lib/openvas/users/ for content. If content is found this means a user
+ * for openvas exists.
+ * @return true if users were found, false otherwise.
+ */
+global boolean CheckUserExists () {
+    list<string> users = (list<string>) SCR::Read(.target.dir, "/var/lib/openvas/users/");
+    if (size(users) > 0)
+      return true;
+    else
+      return false;
+}
+
+
+/**
  * Read all OpenVAS Security Scanner settings
  * @return true on success
  */
