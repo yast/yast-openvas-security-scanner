@@ -94,6 +94,7 @@ any MainSequence () {
 any OpenvasSecurityScannerSequence () {
     map aliases = $[
 	"read"       : [ ``( ReadDialog () ), true ],
+	"adduser"    :   ``( AddUserDialog () ),
 	"main"       :   ``( MainSequence () ),
 	"feed_fetch" :   ``( FetchFeedDialog () ),
 	"enter_gsf"  :   ``( EnterGSFLocationDialog () ),
@@ -106,8 +107,13 @@ any OpenvasSecurityScannerSequence () {
 	"ws_start" : "read",
 	"read" : $[
 	    `abort	: `abort,
+            `addUser    : "adduser",
 	    `next	: "main"
 	],
+	"adduser" : $[
+            `abort      : `abort,
+            `next       : "main"
+        ],
 	"main" : $[
 	    `abort	  : `abort,
             `feedsync_now : "feed_fetch",

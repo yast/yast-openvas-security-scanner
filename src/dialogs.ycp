@@ -34,6 +34,7 @@ textdomain "openvas-security-scanner";
 import "Label";
 import "Wizard";
 import "OpenvasSecurityScanner";
+import "Popup";
 
 include "openvas-security-scanner/helps.ycp";
 
@@ -87,7 +88,7 @@ any ScannerConfigurationDialog () {
     integer w = 38;
     term contents = `VBox (`Frame ("Security Scanner Service",        `MinSize (w, 0, radio_box)), `VSpacing (1),
                            `Frame ("Professional Feed Subscriptions", `MinSize (w, 0, gsf_box)), `VSpacing (1),
-                           `Frame ("Manual Feed Management",          `MinSize (w, 0, `VBox (sync_now_button))));
+                           `Frame ("Manual Feed Management",          `MinSize (w, 0, `VBox (sync_now_button))), `VSpacing (1) );
 
     Wizard::SetContentsButtons (caption, contents,
                                HELPS["configuration"]:"",
@@ -172,7 +173,7 @@ any EnterGSFLocationDialog () {
     string caption = _("Greenbone Security Feed installation");
 
 
-    term contents = `VBox (`InputField(`id(`gsf_location), _("Path to directory containing the Greenbone Security Feed Files"), ""));
+    term contents = `VBox (`InputField(`id(`gsf_location), _("&Path to directory containing the Greenbone Security Feed Files"), ""));
 
     Wizard::SetContentsButtons (caption, contents, 
                                 HELPS["activategsf"]:"",
@@ -224,6 +225,70 @@ any DeactivateGSFDialog () {
    Wizard::RestoreHelp (HELPS["deactivategsf"]:""); /** TODO help */
    boolean ret = OpenvasSecurityScanner::DeactivateGSF ();
    return ret ? `next : `abort;
+}
+
+
+/**
+ * Dialog to create an (openvas) user.
+ *
+ * @return Yet unused next or abort.
+ * @todo Implement behaviour based on choice (return).
+ */
+any AddUserDialog () {
+    string caption = _("Add User to OpenVAS Security Scanner");
+    string message = _("In order for the OpenVAS Security Scanner to work, a user has to be installed.");
+
+    term contents = `VBox (`Label(message),
+                           `InputField(`id(`user_login), _("&Login of the user"), ""));
+    contents = add (contents, `Password(`id(`user_pass), _("&Password for user"), ""));
+    contents = add (contents, `Password(`id(`user_pass_again), _("P&assword for user (again)"), ""));
+
+    Wizard::SetContentsButtons (caption, contents,
+                                HELPS["adduser"]:"", // @todo Create and reference help text
+                                Label::BackButton(), Label::NextButton());
+    Wizard::DisableBackButton ();
+
+    any ret = nil;
+
+    /** @todo Nicer wording when displaying text what happens (no user ... has to be created ... ). */
+    while (true) {
+        ret = UI::UserInput ();
+        if (ret == `abort)
+        {
+            break;
+        }
+        else if (ret == `next)
+        {
+           /*  Assuming location is correct */
+	   any login = UI::QueryWidget(`id(`user_login), `Value);
+	   any pw1 = UI::QueryWidget(`id(`user_pass), `Value);
+	   any pw2 = UI::QueryWidget(`id(`user_pass_again), `Value);
+           if (pw1 == pw2)
+             {
+               string addUserCmd = "printf \"" + (string) login + "\n\n" + (string) pw1 + "\n" + (string) pw2 + "\n\n\" | openvas-adduser";
+
+               integer ret = (integer) SCR::Execute (.target.bash, addUserCmd);
+               if (ret != 0) Popup::Message ("Error creating user, try to create it yourself with openvas-adduser and inspect messages.");
+
+               Wizard::RestoreBackButton ();
+               return `next;
+             }
+           else
+             {
+               Popup::Message("Must enter equal passwords");
+               continue;
+             }
+           break;
+        }
+        else
+        {
+            y2error ("unexpected return code: %1", ret);
+            continue;
+        }
+    }
+
+    Wizard::RestoreBackButton ();
+    return ret;
 }
 
 

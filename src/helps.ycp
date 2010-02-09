@@ -124,7 +124,19 @@ An additional dialog informs whether it is safe to do so.
                      + _("previous NVT datastores will be deleted, which might take some time. ")
                      + _("Note that in order to synchronize with a feed, the scanner service has to be stopped. It will be restarted once the synchronization is finished. ")
                      + _("Click <b>abort</b> to abort this action.")
-                     + "</p></p>"
+                     + "</p></p>",
+
+  "adduser" : _("<p><b><big>Add User to OpenVAS Security Scanner</big></b></br>
+<p>A working installation of the OpenVAS Security Scanner has at least one user installed.
+Note that this user is specific to OpenVAS.</p>
+<p><b>Login of the user</b>: Type the user login name here.</p>
+<p><b>Password for user</b>: Type the password for the user here.</p>
+<p><b>Password for user (again)</b>: Type the password for the user here, again.</p>
+</p>")
+/*_("Login of the user"), ""));
+    contents = add (contents, `Password(`id(`user_pass), _("Password for user"), ""));
+    contents = add (contents, `Password(`id(`user_pass_again), _("Password for user (again)"), ""));*/
+
 ];
 
 /* EOF */
