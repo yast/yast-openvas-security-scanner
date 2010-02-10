@@ -1,0 +1,43 @@
+#!/bin/sh
+# /etc/cron.daily/openvas-feed-sync.cron.daily
+# Written by Felix Wolfsteller <felix.wolfsteller@greenbone.net>
+# based on work by Michael Wiegand and Stephan Kleine
+
+. /etc/sysconfig/openvas-scanner
+
+# Check for missing binaries (stale symlinks should not happen)
+OPENVASSD_BIN=/usr/sbin/openvassd
+test -x $OPENVASSD_BIN || { echo "$OPENVASSD_BIN not installed"; 
+        exit 1; }
+
+# Check for existence of needed config file and read it
+OPENVASSD_CONFIG=/etc/sysconfig/openvas-scanner
+test -r $OPENVASSD_CONFIG || { echo "$OPENVASSD_CONFIG not existing";
+        exit 1; }
+
+# Read config   
+. $OPENVASSD_CONFIG
+
+# Check whether a feed was chosen via the YaST Module
+[ -n "$feed" ] || { echo "No Feed subscription was chosen";
+        exit 1; }
+
+# Check whether synchronization should take place
+[ -n "$dailysync" ] || { echo "Not specified whether to synchronize or not";
+        exit 1; }
+
+# TODO Check value of dailysync, exit 0 if shouldnt sync
+
+# Check which feed was chosen and sync with feed
+feed_sync_script=""
+
+[ "$feed" = "OpenVAS NVT Feed" ] && [ -x /usr/sbin/openvas-nvt-sync ] && feed_sync_script=/usr/sbin/openvas-nvt-sync
+[ "$feed" = "Greenbone Security Feed" ] && [ -x /usr/sbin/greenbone-nvt-sync ] && feed_sync_script=/usr/sbin/greenbone-nvt-sync
+
+[ -n "$feed_sync_script" ] || { echo "Unknown feed chosen.";
+        exit 1
+
+$feed_sync_script
+
+exit 0
+
