@@ -57,6 +57,11 @@ boolean write_only = false;
 global any feed_choice = "";
 
 /**
+ * Whether or not the user choose to daily synchronize with feed via a cron job.
+ */
+global boolean daily_sync = false;
+
+/**
  * Hold the path to where to install the GSF files from.
  */
 global string gsf_location = "";
@@ -174,9 +179,11 @@ global boolean Read() {
     Progress::NextStage ();
     sleep (sl);
 
-    feed_choice = SCR::Read (.etc.openvas.openvas_security_scanner_config.feed);
+    feed_choice = SCR::Read (.etc.sysconfig.openvas-scanner.feed);
     if (feed_choice == nil)
        feed_choice = "No Feed";
+
+    daily_sync = (SCR::Read (.etc.sysconfig.openvas-scanner.daily_sync) == "yes");
 
     return true;
 }
@@ -209,8 +216,10 @@ global boolean Write() {
     if (PollAbort ()) return false;
     Progress::NextStage ();
     /* Error message */
-    if (!SCR::Write (.etc.openvas.openvas_security_scanner_config.feed, feed_choice)
-        || !SCR::Write (.etc.openvas.openvas_security_scanner_config, nil)){
+    if (!SCR::Write (.etc.sysconfig.openvas-scanner.feed, feed_choice)
+        || !SCR::Write (.etc.sysconfig.openvas-scanner.daily_sync, daily_sync ? "yes" : "no")
+        || !SCR::Write (.etc.sysconfig.openvas-scanner, nil)){
+        SCR::Write (.etc.sysconfig.openvas-scanner, nil);
         Report::Error (_("Cannot write OpenVAS Security Scanner settings."));
     }
 
@@ -417,6 +426,8 @@ global boolean SyncWithFeed () {
 
 /**
  * Deactivate the GSF, remove access key and synchronization script.
+ *
+ * @return TRUE is not aborted, false otherwise.
  */
 global boolean DeactivateGSF () {
     /* Deactivate Greenbone Security Feed dialog caption */

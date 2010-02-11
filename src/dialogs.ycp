@@ -82,13 +82,20 @@ any ScannerConfigurationDialog () {
     }
 
     // Disable the "Sync Now" button if no feed is selected / the OpenVAS service is disabled.
+    term feed_management_box = `VBox();
     term sync_now_button = (no_feed_selected) ? `PushButton(`id(`feedsync_now), `opt(`disabled), _("&Synchronize with Feed now"))
                                               : `PushButton(`id(`feedsync_now), `opt(`notify),   _("&Synchronize with Feed now"));
+    feed_management_box = add (feed_management_box, sync_now_button);
+
+    term croncheckbox = `CheckBox(`id(`cronjob), `opt(`notify), _("Do a da&ily feed synchronization"), OpenvasSecurityScanner::daily_sync);
+
+    feed_management_box = add (feed_management_box, croncheckbox);
+
 
     integer w = 38;
     term contents = `VBox (`Frame ("Security Scanner Service",        `MinSize (w, 0, radio_box)), `VSpacing (1),
                            `Frame ("Professional Feed Subscriptions", `MinSize (w, 0, gsf_box)), `VSpacing (1),
-                           `Frame ("Manual Feed Management",          `MinSize (w, 0, `VBox (sync_now_button))), `VSpacing (1) );
+                           `Frame ("Feed Management",                 `MinSize (w, 0, feed_management_box)), `VSpacing (1) );
 
     Wizard::SetContentsButtons (caption, contents,
                                HELPS["configuration"]:"",
@@ -116,6 +123,10 @@ any ScannerConfigurationDialog () {
                choice = "OpenVAS NVT Feed";
             else if (ret == `gsf)
                choice = "Greenbone Security Feed";
+
+            /** @todo Check whether cronjob script is installed, not allow/ grey out choice otherwise. */
+            ret = UI::QueryWidget (`id(`cronjob), `Value);
+            OpenvasSecurityScanner::daily_sync = (boolean) ret;
 
             /* Check whether the feed-choice changed, do nothing if so */
             if (OpenvasSecurityScanner::feed_choice == choice)
@@ -232,7 +243,6 @@ any DeactivateGSFDialog () {
  * Dialog to create an (openvas) user.
  *
  * @return Yet unused next or abort.
- * @todo Implement behaviour based on choice (return).
  */
 any AddUserDialog () {
     string caption = _("Add User to OpenVAS Security Scanner");
@@ -244,7 +254,7 @@ any AddUserDialog () {
     contents = add (contents, `Password(`id(`user_pass_again), _("P&assword for user (again)"), ""));
 
     Wizard::SetContentsButtons (caption, contents,
-                                HELPS["adduser"]:"", // @todo Create and reference help text
+                                HELPS["adduser"]:"", // @todo Improve help text and label
                                 Label::BackButton(), Label::NextButton());
     Wizard::DisableBackButton ();
 
@@ -259,23 +269,27 @@ any AddUserDialog () {
         }
         else if (ret == `next)
         {
-           /*  Assuming location is correct */
 	   any login = UI::QueryWidget(`id(`user_login), `Value);
 	   any pw1 = UI::QueryWidget(`id(`user_pass), `Value);
 	   any pw2 = UI::QueryWidget(`id(`user_pass_again), `Value);
+           if (login == nil || login == "")
+             {
+               Popup::Message(_("User name must not be empty."));
+               continue;
+             }
            if (pw1 == pw2)
              {
                string addUserCmd = "printf \"" + (string) login + "\n\n" + (string) pw1 + "\n" + (string) pw2 + "\n\n\" | openvas-adduser";
 
                integer ret = (integer) SCR::Execute (.target.bash, addUserCmd);
-               if (ret != 0) Popup::Message ("Error creating user, try to create it yourself with openvas-adduser and inspect messages.");
+               if (ret != 0) Popup::Message (_("Error creating user, try to create it yourself with openvas-adduser and inspect messages."));
 
                Wizard::RestoreBackButton ();
                return `next;
              }
            else
              {
-               Popup::Message("Must enter equal passwords");
+               Popup::Message(_("Must enter equal passwords"));
                continue;
              }
            break;

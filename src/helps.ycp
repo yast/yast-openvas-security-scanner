@@ -67,6 +67,10 @@ map HELPS = $[
                     // Synchronize with Feed now
                     + "</p><p><b>" + _("Synchronize with Feed now") + "</b>: "
                     + _("Will immediately start a synchronize with the selected feed. Note that this option is not available if you just changed the feed. ")
+                    // Do a daily feed synchronization
+                    + "</p><p><b>" + _("Do a daily feed synchronization") + "</b>: "
+                    + _("Will enable the daily feed synchronization with a cron job, if a feed was chosen and the service is enabled. Note that the openvas scanner service will then be restarted daily, too.")
+
                     // Next
                     + "</p><p><b>" + _("Next") + "</b>: "
                     + _("Click on \"Next\" to synchronize with a newly chosen feed.")
@@ -133,9 +137,6 @@ Note that this user is specific to OpenVAS.</p>
 <p><b>Password for user</b>: Type the password for the user here.</p>
 <p><b>Password for user (again)</b>: Type the password for the user here, again.</p>
 </p>")
-/*_("Login of the user"), ""));
-    contents = add (contents, `Password(`id(`user_pass), _("Password for user"), ""));
-    contents = add (contents, `Password(`id(`user_pass_again), _("Password for user (again)"), ""));*/
 
 ];
 

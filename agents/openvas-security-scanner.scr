@@ -2,7 +2,7 @@
  * File:
  *   openvas_security_scanner.scr
  * Summary:
- *   SCR Agent for reading/writing /etc/openvas/openvas_security_scanner_config
+ *   SCR Agent for reading/writing /etc/sysconfig/openvas-scanner
  *   using the ini-agent
  * Access:
  *   read/write
@@ -17,8 +17,8 @@
  * $**Id$
  */
 
-.etc.openvas.openvas_security_scanner_config
+.etc.sysconfig.openvas-scanner
 
 `ag_ini(
-    `SysConfigFile( "/etc/openvas/openvas_security_scanner.config")
+    `SysConfigFile( "/etc/sysconfig/openvas-scanner")
 )
