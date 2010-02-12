@@ -52,15 +52,15 @@ any ScannerConfigurationDialog () {
 
     term radio_group = `VBox ();
     radio_group = add (radio_group, `Left(
-                                        `RadioButton(`id(`no_feed), _("&Disable OpenVAS Security Scanner"), no_feed_selected) ));
+                                        `RadioButton(`id(`no_feed), `opt(`notify), _("&Disable OpenVAS Security Scanner"), no_feed_selected) ));
 
     radio_group = add (radio_group, `Left(
-                                        `RadioButton(`id(`onf), _("Enable and use &OpenVAS NVT Feed"), (OpenvasSecurityScanner::feed_choice == "OpenVAS NVT Feed")) ));
+                                        `RadioButton(`id(`onf), `opt(`notify), _("Enable and use &OpenVAS NVT Feed"), (OpenvasSecurityScanner::feed_choice == "OpenVAS NVT Feed")) ));
 
     // Disable the Greenbone Security Feed option if the GSF scripts are not installed / activated
     if (OpenvasSecurityScanner::IsGSFInstalled ())
     {
-        radio_group = add (radio_group, `Left(`RadioButton(`id(`gsf), _("Enable and use &Greenbone Security Feed"), (OpenvasSecurityScanner::feed_choice == "Greenbone Security Feed")) ));
+        radio_group = add (radio_group, `Left(`RadioButton(`id(`gsf), `opt(`notify), _("Enable and use &Greenbone Security Feed"), (OpenvasSecurityScanner::feed_choice == "Greenbone Security Feed")) ));
     }
     else
     {
@@ -87,7 +87,7 @@ any ScannerConfigurationDialog () {
                                               : `PushButton(`id(`feedsync_now), `opt(`notify),   _("&Synchronize with Feed now"));
     feed_management_box = add (feed_management_box, sync_now_button);
 
-    term croncheckbox = `CheckBox(`id(`cronjob), `opt(`notify), _("Do a da&ily feed synchronization"), OpenvasSecurityScanner::daily_sync);
+    term croncheckbox = `CheckBox(`id(`cronjob), _("Do a da&ily feed synchronization"), OpenvasSecurityScanner::daily_sync);
 
     feed_management_box = add (feed_management_box, croncheckbox);
 
@@ -102,9 +102,32 @@ any ScannerConfigurationDialog () {
                                Label::BackButton (), Label::FinishButton ());
     Wizard::DisableBackButton();
 
+    // Does not make sense to have synchronize with "no feed", disable widgets in that case
+    if (no_feed_selected)
+      {
+        UI::ChangeWidget (`id(`cronjob), `Enabled, false);
+        UI::ChangeWidget (`id(`cronjob), `Value, false);
+      }
+
     any ret = nil;
     while (true) {
         ret = UI::UserInput ();
+
+        // handle no feed onf, gsf and en/disable the daily sync checkbox accordingly.
+        if (ret == `no_feed)
+          {
+             UI::ChangeWidget (`id(`cronjob), `Enabled, false);
+             UI::ChangeWidget (`id(`cronjob), `Value, false);
+             UI::ChangeWidget (`id(`feedsync_now), `Enabled, false);
+             continue;
+          }
+        else if (ret == `onf || ret == `gsf)
+          {
+             UI::ChangeWidget (`id(`cronjob), `Enabled, true);
+             UI::ChangeWidget (`id(`feedsync_now), `Enabled, true);
+             continue;
+          }
+        
 
         /* Abort? */
         if (ret == `abort)
@@ -124,10 +147,6 @@ any ScannerConfigurationDialog () {
             else if (ret == `gsf)
                choice = "Greenbone Security Feed";
 
-            /** @todo Check whether cronjob script is installed, not allow/ grey out choice otherwise. */
-            ret = UI::QueryWidget (`id(`cronjob), `Value);
-            OpenvasSecurityScanner::daily_sync = (boolean) ret;
-
             /* Check whether the feed-choice changed, do nothing if so */
             if (OpenvasSecurityScanner::feed_choice == choice)
               ret = `write;
@@ -143,6 +162,29 @@ any ScannerConfigurationDialog () {
                     ret = `fetch_new;
                 }
             }
+
+            /** @todo Check whether cronjob script is installed, not allow/ grey out choice otherwise. */
+            any ui_dailysync = UI::QueryWidget (`id(`cronjob), `Value);
+
+            if (!(boolean) ui_dailysync || choice == "No Feed")
+            {
+              SCR::Execute (.target.remove, "/etc/cron.daily/openvas-nvt-sync");
+              SCR::Execute (.target.remove, "/etc/cron.daily/greenbone-nvt-sync");
+            }
+            else // Daily sync was checked
+            {
+              if (choice == "OpenVAS NVT Feed")
+                {
+                  SCR::Execute (.target.symlink, "/usr/sbin/openvas-nvt-sync", "/etc/cron.daily/openvas-nvt-sync");
+                  SCR::Execute (.target.remove, "/etc/cron.daily/greenbone-nvt-sync");
+                }
+              else if (choice == "Greenbone Security Feed")
+                {
+                  SCR::Execute (.target.symlink, "/usr/sbin/greenbone-nvt-sync", "/etc/cron.daily/greenbone-nvt-sync");
+                  SCR::Execute (.target.remove, "/etc/cron.daily/openvas-nvt-sync");
+                }
+            }
+
             break;
         
         }

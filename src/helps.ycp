@@ -69,7 +69,7 @@ map HELPS = $[
                     + _("Will immediately start a synchronize with the selected feed. Note that this option is not available if you just changed the feed. ")
                     // Do a daily feed synchronization
                     + "</p><p><b>" + _("Do a daily feed synchronization") + "</b>: "
-                    + _("Will enable the daily feed synchronization with a cron job, if a feed was chosen and the service is enabled. Note that the openvas scanner service will then be restarted daily, too.")
+                    + _("Will enable the daily feed synchronization with a cron job, if a feed was chosen and the service is enabled. Note that the openvas scanner service has to be restarted to be able to use the newly fetched NVTs.")
 
                     // Next
                     + "</p><p><b>" + _("Next") + "</b>: "
