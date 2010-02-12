@@ -524,8 +524,7 @@ global boolean ActivateGSF () {
     /* Copy access key and set permissions */
     if (PollAbort ()) return false;
     Progress::NextStage ();
-    y2milestone (" --> cp " + gsf_location + "/gsf-access-key"
-                            + " /etc/openvas/gsf-access-key <--");
+    y2milestone (" --> cp %1 /gsf-access-key /etc/openvas/gsf-access-key <--", (string) gsf_location);
     SCR::Execute (.target.bash, "cp " + gsf_location + "/gsf-access-key"
                                 + " /etc/openvas/gsf-access-key");
     SCR::Execute (.target.bash, "chmod 400 /etc/openvas/gsf-access-key");

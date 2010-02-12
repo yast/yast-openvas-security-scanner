@@ -131,8 +131,8 @@ An additional dialog informs whether it is safe to do so.
                      + "</p></p>",
 
   "adduser" : _("<p><b><big>Add User to OpenVAS Security Scanner</big></b></br>
-<p>A working installation of the OpenVAS Security Scanner has at least one user installed.
-Note that this user is specific to OpenVAS.</p>
+<p>A working installation of the OpenVAS Security Scanner has at least one openvas login registered.
+This needs to be done just once. The login and password might not contain spaces or double dots (..).</p>
 <p><b>Login of the user</b>: Type the user login name here.</p>
 <p><b>Password for user</b>: Type the password for the user here.</p>
 <p><b>Password for user (again)</b>: Type the password for the user here, again.</p>

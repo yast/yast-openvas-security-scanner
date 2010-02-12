@@ -288,7 +288,7 @@ any DeactivateGSFDialog () {
  */
 any AddUserDialog () {
     string caption = _("Add User to OpenVAS Security Scanner");
-    string message = _("In order for the OpenVAS Security Scanner to work, a user has to be installed.");
+    string message = _("In order for the OpenVAS Security Scanner to work,\na openvas login has to be registered.\n");
 
     term contents = `VBox (`Label(message),
                            `InputField(`id(`user_login), _("&Login of the user"), ""));
@@ -302,7 +302,6 @@ any AddUserDialog () {
 
     any ret = nil;
 
-    /** @todo Nicer wording when displaying text what happens (no user ... has to be created ... ). */
     while (true) {
         ret = UI::UserInput ();
         if (ret == `abort)
@@ -314,9 +313,16 @@ any AddUserDialog () {
 	   any login = UI::QueryWidget(`id(`user_login), `Value);
 	   any pw1 = UI::QueryWidget(`id(`user_pass), `Value);
 	   any pw2 = UI::QueryWidget(`id(`user_pass_again), `Value);
+           // Do some input checks
            if (login == nil || login == "")
              {
-               Popup::Message(_("User name must not be empty."));
+               Popup::Message(_("Login name must not be empty."));
+               continue;
+             }
+           else if (issubstring (login, " ") || issubstring (pw1, " ") || issubsting (pw2, " ")
+                    || issubsting (login, ".."))
+             {
+               Popup::Message (_("Login name and password must not contain space character or double dots."));
                continue;
              }
            if (pw1 == pw2)
