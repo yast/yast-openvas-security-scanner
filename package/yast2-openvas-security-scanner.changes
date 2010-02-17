@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Feb 17 09:51:53 UTC 2010 - felix.wolfsteller@intevation.de
+
+- Updated with a sanity check (does a user exist) and the 
+  possibility to put the sync script of the currently chosen feed
+  into /etc/cron.daily. Also, uses sysconfig instead of a file
+  in /etc/openvas.
+
+-------------------------------------------------------------------
 Fri Jan 22 13:12:20 CET 2010 - jsrain@suse.cz
 
 - initial release (fate#307440)
