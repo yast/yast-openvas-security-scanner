@@ -319,8 +319,8 @@ any AddUserDialog () {
                Popup::Message(_("Login name must not be empty."));
                continue;
              }
-           else if (issubstring (login, " ") || issubstring (pw1, " ") || issubsting (pw2, " ")
-                    || issubsting (login, ".."))
+           else if (issubstring ((string)login, " ") || issubstring ((string)pw1, " ") || issubstring ((string)pw2, " ")
+                    || issubstring ((string)login, ".."))
              {
                Popup::Message (_("Login name and password must not contain space character or double dots."));
                continue;
