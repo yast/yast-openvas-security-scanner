@@ -225,7 +225,7 @@ any ScannerConfigurationDialog () {
  * @return any dialog result
  */
 any EnterGSFLocationDialog () {
-    string caption = _("Greenbone Security Feed installation");
+    string caption = _("Greenbone Security Feed Activation");
 
 
     term contents = `VBox ( `PushButton(`id(`gsf_fromfile), `opt(`notify), _("&Import from file")),

@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Fri Mar 12 09:09:38 UTC 2010 - felix.wolfsteller@intevation.de
+
+- Added check for signature check configuration value, prevent
+  conflicting user input.
+- 2.17.3
+
+-------------------------------------------------------------------
 Wed Mar 10 11:15:50 UTC 2010 - felix.wolfsteller@intevation.de
 
 - Added dependency to openvas-scanner package (>=3.0)

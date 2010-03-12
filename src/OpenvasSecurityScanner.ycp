@@ -489,7 +489,14 @@ global boolean ImportGreenboneKey () {
 
     // Remove the log and state files
     SCR::Execute (.target.bash, "rm -f /var/log/openvas/gbkeyimport.state /var/log/openvas/gbkeyimport.log /var/log/openvas/gbkeytrust.state /var/log/openvas/gbkeytrust.log");
-        
+
+    // Check whether signature checks are enabled
+    map result = (map) SCR::Execute (.target.bash_output, "openvassd -s | grep nasl_no_signature_check | sed 's/nasl\_no\_signature\_check\ *=\ *//'");
+    if (result["stdout"]:"" != "no\n")
+    {
+      y2milestone ("stdout: _%1_", result["stdout"]:"");
+      Popup::Warning (_("You seem to have disabled signature checking in your OpenVAS configuration.\n\nPlease make sure that the line\n    nasl_no_signature_check = no\noccurs in the file /etc/openvas/openvassd.conf."));
+    }
 
     return true;
 }
