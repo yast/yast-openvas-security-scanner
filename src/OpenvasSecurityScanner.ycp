@@ -336,7 +336,7 @@ global boolean FetchFeed () {
       SCR::Execute (.target.bash, "greenbone-nvt-sync");
     else
       SCR::Execute (.target.bash, "openvas-nvt-sync");
-    /** @TODO Once the feed synchronization scripts have been consolidated, it
+    /** @todo Once the feed synchronization scripts have been consolidated, it
       *       will be possible to check the return. */
     sleep (sl);
 
@@ -399,7 +399,7 @@ global boolean SyncWithFeed () {
       SCR::Execute (.target.bash, "greenbone-nvt-sync");
     else
       SCR::Execute (.target.bash, "openvas-nvt-sync");
-    /** @TODO Once the feed synchronization scripts have been consolidated, it
+    /** @todo Once the feed synchronization scripts have been consolidated, it
       *       will be possible to check the return. */
     sleep (sl);
 

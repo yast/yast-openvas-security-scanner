@@ -163,7 +163,6 @@ any ScannerConfigurationDialog () {
                 }
             }
 
-            /** @todo Check whether cronjob script is installed, not allow/ grey out choice otherwise. */
             any ui_dailysync = UI::QueryWidget (`id(`cronjob), `Value);
 
             if (!(boolean) ui_dailysync || choice == "No Feed")
