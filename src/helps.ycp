@@ -78,10 +78,10 @@ map HELPS = $[
 
     /* Help for the Activate Greenbone Security Feed dialog */
     "activategsf" : "<p><b><big>" + _("Activate Greenbone Security Feed") + "</big></b>"
-                   + "<p>" + _("If you already have obtained an access key, provide the path to these files in the text entry field.")
+                   + "<p>" + _("If you already have obtained an access key, provide it in full text in the text field or click on \"Import from file\" and chose the path to it.")
                    + "</p><p>"
                    + _("If you do not have an access key to the Greenbone Security Feed, please visit <tt>http://greenbone.net/order/</tt> to obtain one. ")
-                   + _("Enter the path to the access key files. ")
+                   + _("If you chose to provide the key in full text, the key might be base64 encoded. ")
                    + _("The access key and synchronization script will then be installed and you can choose the <b>\"Use Greenbone Security Feed\"</b> option.")
                    + "</p>",
 

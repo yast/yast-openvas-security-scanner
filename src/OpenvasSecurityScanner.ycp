@@ -36,13 +36,14 @@ module "OpenvasSecurityScanner";
 textdomain "openvas-security-scanner";
 
 import "FileUtils";
+import "Message";
 import "Popup";
 import "Progress";
 import "Report";
 import "SCR";
 import "Service";
 import "Summary";
-import "Message";
+
 
 /**
  * Write only, used during autoinstallation.
@@ -61,10 +62,6 @@ global any feed_choice = "";
  */
 global boolean daily_sync = false;
 
-/**
- * Hold the path to where to install the GSF files from.
- */
-global string gsf_location = "";
 
 /**
  * Sleeping time beetwing progress steps.
@@ -297,7 +294,7 @@ global boolean FetchFeed () {
     /* Progress stage 1/4 */
     _("Stop the OpenVAS Security Scanner service"),
     /* Progress stage 2/4 */
-    _("Delete the NVT datastores"),
+    _("Delete the NVT datastores (may take a while)"),
     /* Progress stage 3/4 */
     _("Fetch the Feed (may take a while)"),
     /* Progress stage 4/4 */
@@ -306,7 +303,7 @@ global boolean FetchFeed () {
     /* Progress stage 1/4 */
     _("Stopping the OpenVAS Security Scanner service..."),
     /* Progress stage 2/4 */
-    _("Deleting the NVT datastores..."),
+    _("Deleting the NVT datastores  (may take a while)..."),
     /* Progress stage 3/4 */
     _("Fetching the Feed (may take a while)..."),
     /* Progress stage 4/4 */
@@ -349,9 +346,8 @@ global boolean FetchFeed () {
     Service::Adjust ("openvas-scanner", "enable");
     if (!Service::Start ("openvas-scanner"))
         Report::Error (_("Could not start OpenVAS Security Scanner service."));
-        /** @TODO decide whether
-          * Report::Error (Message::CannotAdjustService ("openvas-scanner"));
-          * is more accurate */
+        /** Report::Error (Message::CannotAdjustService ("openvas-scanner"));
+          * might be more accurate */
     sleep (sl);
 
     Progress::NextStage ();
@@ -413,9 +409,8 @@ global boolean SyncWithFeed () {
     Service::Adjust ("openvas-scanner", "enable");
     if (!Service::Start ("openvas-scanner"))
         Report::Error (_("Could not start OpenVAS Security Scanner service."));
-        /** @TODO decide whether
-          * Report::Error (Message::CannotAdjustService ("openvas-scanner"));
-          * is more accurate */
+        /* Report::Error (Message::CannotAdjustService ("openvas-scanner"));
+         * might be more accurate */
     sleep (sl);
 
     Progress::NextStage ();
@@ -425,29 +420,25 @@ global boolean SyncWithFeed () {
 }
 
 /**
- * Deactivate the GSF, remove access key and synchronization script.
+ * Deactivate the GSF.
  *
  * @return TRUE is not aborted, false otherwise.
  */
 global boolean DeactivateGSF () {
     /* Deactivate Greenbone Security Feed dialog caption */
-    string caption = _("Deactivate Greenbone Security Feed Subscription");
+    string caption = _("Deactivate the Greenbone Security Feed Subscription");
 
-    integer steps = 3;
+    integer steps = 2;
     
     Progress::New(caption, " ", steps, [
-    /* Progress stage 1/3 */
+    /* Progress stage 1/2 */
     _("Remove Greenbone Security Feed Access Key"),
-    /* Progress stage 2/3 */
-    _("Remove Greenbone Security Feed Synchronization Script"),
-    /* Progress stage 3/3 */
+    /* Progress stage 1/2 */
     _("Delete NVT datastores"),
 ], [
-    /* Progress stage 1/3 */
+    /* Progress stage 1/2 */
     _("Removing Greenbone Security Feed Access Key..."),
-    /* Progress stage 2/3 */
-    _("Removing Greenbone Security Feed Synchronization Script..."),
-    /* Progress stage 3/3 */
+    /* Progress stage 2/2 */
     _("Deleting NVT datastores..."),
     Message::Finished ()
     ], "");
@@ -458,14 +449,7 @@ global boolean DeactivateGSF () {
     if (PollAbort ()) return false;
     Progress::NextStage ();
     SCR::Execute (.target.bash, "rm -rf /etc/openvas/gsf-access-key");
-    sleep (sl);
-
-
-    /* Removing sync script */
-    if (PollAbort ()) return false;
-    Progress::NextStage ();
-    SCR::Execute (.target.bash, "rm -rf /usr/sbin/greenbone-nvt-sync");
-    sleep (sl);
+    //sleep (sl);
 
     /* Clean the NVT Cache and Collection */
     if (PollAbort ()) return false;
@@ -478,37 +462,62 @@ global boolean DeactivateGSF () {
 }
 
 /**
+ * Import the Access Key, delete the file.
+ * @return true if greenbone access key import succeeded.
+ */
+global boolean ImportGreenboneKey () {
+    // Ensure /etc/openvas/gnupg exists
+    SCR::Execute (.target.bash, "mkdir -p /etc/openvas/gnupg");
+    SCR::Execute (.target.bash, "chmod 770 /etc/openvas/gnupg");
+
+    // Import key
+    SCR::Execute (.target.bash, "chmod 400 /etc/openvas/gsf-access-key");
+    string cmd = "gpg --homedir=/etc/openvas/gnupg --status-file /var/log/openvas/gbkeyimport.state --logger-file /var/log/openvas/gbkeyimport.log --import /etc/openvas/gsf-access-key";
+    integer ret = (integer) SCR::Execute (.target.bash, cmd);
+    if (ret != 0)
+    {
+      Report::Error (_("The Greenbone Access Key could not be imported."));
+      return false;
+    }
+    // Set trust in the Greenbone Security Feed Signing Key
+    ret = (integer) SCR::Execute (.target.bash, "echo `grep IMPORT_OK /var/log/openvas/gbkeyimport.state | cut -d \" \" -f 4`:6: | gpg --homedir=/etc/openvas/gnupg --status-file /var/log/openvas/gbkeytrust.state --logger-file /var/log/openvas/gbkeytrust.log --import-ownertrust");
+    if (ret != 0)
+    {
+      Report::Error (_("Trust-level for the Greenbone Access Key could not be set."));
+      return false;
+    }
+
+    // Remove the log and state files
+    SCR::Execute (.target.bash, "rm -f /var/log/openvas/gbkeyimport.state /var/log/openvas/gbkeyimport.log /var/log/openvas/gbkeytrust.state /var/log/openvas/gbkeytrust.log");
+        
+
+    return true;
+}
+
+/**
  * Fetches a NVT Feed.
  * @return true on success
  */
 global boolean ActivateGSF () {
     /* Openvas Security Scanner Feed Fetching dialog caption */
-    string caption = _("Fetching NVT Feed");
+    string caption = _("Activate the Greenbone Security Feed Subscription");
 
-    integer steps = 5;
+    integer steps = 3;
     
     Progress::New(caption, " ", steps, [
-    /* Progress stage 1/5 */
-    _("Copy Greenbone Security Feed Access Key"),
-    /* Progress stage 2/5 */
+    /* Progress stage 1/3 */
     _("Add feed.greenbone.net to list of known hosts"),
-    /* Progress stage 3/5 */
+    /* Progress stage 2/3 */
     _("Import Greenbone Key"),
-    /* Progress stage 4/5 */
-    _("Install greenbone-nvt-sync script"),
-    /* Progress stage 5/5 */
-    _("Test Keys")
+    /* Progress stage 3/3 */
+    _("Test Key")
 ], [
-    /* Progress stage 1/5 */
-    _("Copying Greenbone Security Feed Access Key..."),
-    /* Progress stage 2/5 */
+    /* Progress stage 1/3 */
     _("Adding feed.greenbone.net to list of known hosts"),
-    /* Progress stage 3/5 */
+    /* Progress stage 2/3 */
     _("Importing Greenbone Key..."),
-    /* Progress stage 4/5 */
-    _("Installing greenbone-nvt-sync script..."),
-    /* Progress stage 5/5 */
-    _("Testing Keys..."),
+    /* Progress stage 3/3 */
+    _("Testing Key..."),
     Message::Finished ()
     ], "");
 
@@ -517,41 +526,23 @@ global boolean ActivateGSF () {
     /* Adding greenbone feed location to list of known hosts */
     if (PollAbort ()) return false;
     Progress::NextStage ();
+    SCR::Execute (.target.bash, "touch /root/.ssh/known_hosts");
     SCR::Execute (.target.bash, "echo \"[feed.greenbone.net]:24,[193.108.181.139]:24 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAmVIt4lOPi1lVJfFCtiNjGR4kHj377C6jMY4iaxotYueuGq8l8B1YIMUMLQzaUeaPwOGMZl5mWUT158zaiWK4zOzZarFLey6JrKfrnDZMdCcCneZPBRbMJUxiV1jv4U+/Vp/V1wO6OJ+S9XkodxvN9+vjAhcXspKXcRol30+T9mgilWK+nvSTVEhce+JJYz+gdQFN+1xgkPhjGbXSjHT7zB5fVjWe7TYLGhdqj1U+NTVOcKNn0wMBRGM3T63rKV71KI1hmLdX6+VmVQOCjYpqsFRh0TZadh5cEE5gmPDCnGlXCA9BrilOMSRvsTySs30xN4/Z5RHPWbDS0rwvqBf9Lw==\" >> /root/.ssh/known_hosts");
     sleep (sl);
 
-
-    /* Copy access key and set permissions */
-    if (PollAbort ()) return false;
-    Progress::NextStage ();
-    y2milestone (" --> cp %1 /gsf-access-key /etc/openvas/gsf-access-key <--", (string) gsf_location);
-    SCR::Execute (.target.bash, "cp " + gsf_location + "/gsf-access-key"
-                                + " /etc/openvas/gsf-access-key");
-    SCR::Execute (.target.bash, "chmod 400 /etc/openvas/gsf-access-key");
-    sleep (sl);
-
-    /* Import Greenbone Key via script */
-    if (PollAbort ()) return false;
-    Progress::NextStage ();
-    integer ret = (integer) SCR::Execute (.target.bash,
-                                          gsf_location
-                                          + "/import-greenbone-key");
-    if (ret != 0)
+    /* Import the Greenbone Access Key */
+    boolean bret = ImportGreenboneKey();
+    if (bret == false)
     {
         Report::Error (_("The greenbone key could not be imported."));
     }
     sleep(sl);
 
-    /* Install Greenbone NVT Sync script */
-    if (PollAbort ()) return false;
-    Progress::NextStage ();
-    SCR::Execute (.target.bash, "cp " + gsf_location + "/greenbone-nvt-sync /usr/sbin");
-    sleep (sl);
 
     /* Do a self test */
     if (PollAbort ()) return false;
     Progress::NextStage ();
-    ret = (integer) SCR::Execute (.target.bash,
+    integer ret = (integer) SCR::Execute (.target.bash,
                                   "greenbone-nvt-sync --selftest");
     if (ret != 0)
     {

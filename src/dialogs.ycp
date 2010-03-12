@@ -226,7 +226,8 @@ any EnterGSFLocationDialog () {
     string caption = _("Greenbone Security Feed installation");
 
 
-    term contents = `VBox (`InputField(`id(`gsf_location), _("&Path to directory containing the Greenbone Security Feed Files"), ""));
+    term contents = `VBox ( `PushButton(`id(`gsf_fromfile), `opt(`notify), _("&Import from file")),
+                            `MultiLineEdit(`id(`keytext), _("Greenbone Access Key (can be base64 encoded)"), ""));
 
     Wizard::SetContentsButtons (caption, contents, 
                                 HELPS["activategsf"]:"",
@@ -240,11 +241,29 @@ any EnterGSFLocationDialog () {
         {
             break;
         }
+        else if (ret == `gsf_fromfile)
+        {
+           string ret_path = UI::AskForExistingFile ("/home/", "", "Choose the Greenbone Access Key File");
+           if (ret_path == nil || ret_path == "")
+             continue;
+           any text = SCR::Read (.target.string, ret_path);
+           UI::ChangeWidget (`id(`keytext), `Value, text);
+        }
         else if (ret == `next)
         {
-           /*  Assuming location is correct */
-           any text = UI::QueryWidget(`id(`gsf_location), `Value);
-           OpenvasSecurityScanner::gsf_location = (string) text;
+           string text = (string) UI::QueryWidget(`id(`keytext), `Value);
+           if (issubstring (text, "-----BEGIN RSA PRIVATE KEY-----"))
+           {
+             /*  Assuming its not base64 encoded */
+             SCR::Write (.target.string, "/etc/openvas/gsf-access-key", text);
+           }
+           else
+           {
+               /*  Assuming it is base64 encoded */
+               SCR::Write (.target.string, "/etc/openvas/gsf-access-key.b64", text);
+               SCR::Execute (.target.bash, "base64 -d /etc/openvas/gsf-access-key.b64 > /etc/openvas/gsf-access-key");
+               SCR::Execute (.target.bash, "rm /etc/openvas/gsf-access-key.b64");
+           }
            break;
         }
         else
@@ -275,7 +294,7 @@ any DisableOpenVASDialog () {
  * @return any dialog result
  */
 any DeactivateGSFDialog () {
-   Wizard::RestoreHelp (HELPS["deactivategsf"]:""); /** TODO help */
+   Wizard::RestoreHelp (HELPS["deactivategsf"]:"");
    boolean ret = OpenvasSecurityScanner::DeactivateGSF ();
    return ret ? `next : `abort;
 }
@@ -296,7 +315,7 @@ any AddUserDialog () {
     contents = add (contents, `Password(`id(`user_pass_again), _("P&assword for user (again)"), ""));
 
     Wizard::SetContentsButtons (caption, contents,
-                                HELPS["adduser"]:"", // @todo Improve help text and label
+                                HELPS["adduser"]:"",
                                 Label::BackButton(), Label::NextButton());
     Wizard::DisableBackButton ();
 
