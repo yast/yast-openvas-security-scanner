@@ -170,6 +170,7 @@ any ScannerConfigurationDialog () {
             {
               SCR::Execute (.target.remove, "/etc/cron.daily/openvas-nvt-sync");
               SCR::Execute (.target.remove, "/etc/cron.daily/greenbone-nvt-sync");
+              OpenvasSecurityScanner::daily_sync = false;
             }
             else // Daily sync was checked
             {
@@ -183,6 +184,7 @@ any ScannerConfigurationDialog () {
                   SCR::Execute (.target.symlink, "/usr/sbin/greenbone-nvt-sync", "/etc/cron.daily/greenbone-nvt-sync");
                   SCR::Execute (.target.remove, "/etc/cron.daily/openvas-nvt-sync");
                 }
+              OpenvasSecurityScanner::daily_sync = true;
             }
 
             break;
