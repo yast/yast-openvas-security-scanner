@@ -113,7 +113,7 @@ any ScannerConfigurationDialog () {
     while (true) {
         ret = UI::UserInput ();
 
-        // handle no feed onf, gsf and en/disable the daily sync checkbox accordingly.
+        // handle no feed, onf, gsf and en/disable the daily sync checkbox accordingly.
         if (ret == `no_feed)
           {
              UI::ChangeWidget (`id(`cronjob), `Enabled, false);
@@ -124,7 +124,7 @@ any ScannerConfigurationDialog () {
         else if (ret == `onf || ret == `gsf)
           {
              UI::ChangeWidget (`id(`cronjob), `Enabled, true);
-             UI::ChangeWidget (`id(`feedsync_now), `Enabled, true);
+             UI::ChangeWidget (`id(`feedsync_now), `Enabled, false);
              continue;
           }
         
