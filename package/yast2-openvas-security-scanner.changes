@@ -1,4 +1,10 @@
 -------------------------------------------------------------------
+Wed Mar 17 14:43:10 CET 2010 - jsrain@suse.cz
+
+- fixed help text (bnc#588295)
+- 2.17.4
+
+-------------------------------------------------------------------
 Fri Mar 12 09:09:38 UTC 2010 - felix.wolfsteller@intevation.de
 
 - Added check for signature check configuration value, prevent

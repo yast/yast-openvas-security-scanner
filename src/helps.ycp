@@ -51,7 +51,7 @@ map HELPS = $[
                     // Enable and use Greenbone Security Feed
                     + "</p><p><b>" + _("Enable and use Greenbone Security Feed") + "</b>: "
                     + _("Select \"Enable and use Greenbone Security Feed\" to switch on the OpenVAS Security Scanner with the Greenbone Security Feed.<br>")
-                    + _("Note that this option is only available if you activated obtained and activated an access key for the Greenbone Security Feed. ")
+                    + _("Note that this option is only available if you obtained and activated an access key for the Greenbone Security Feed. ")
                     + _("The subscription-based Greenbone Security Feed assures Network Vulnerability Tests (NVTs) of consistent quality, high availability and professional support. ")
                     + _("The NVT synchronisation uses SSH-secured RSYNC protocol. ")
                     + _("Previous NVT datastores will be deleted. This might take some time.")
