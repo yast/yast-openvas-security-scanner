@@ -1,4 +1,12 @@
 -------------------------------------------------------------------
+Wed Jun 17 06:58:36 UTC 2010 - felix.wolfsteller@greenbone.net 
+
+- Raised dependency to openvas-scanner >= 3.0.1
+- Fixed issue with creation of .ssh/known_hosts file when
+  non-existing.
+- 2.17.5
+
+-------------------------------------------------------------------
 Wed Mar 17 14:43:10 CET 2010 - jsrain@suse.cz
 
 - fixed help text (bnc#588295)

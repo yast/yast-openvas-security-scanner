@@ -533,6 +533,7 @@ global boolean ActivateGSF () {
     /* Adding greenbone feed location to list of known hosts */
     if (PollAbort ()) return false;
     Progress::NextStage ();
+    SCR::Execute (.target.bash, "mkdir -p /root/.ssh/");
     SCR::Execute (.target.bash, "touch /root/.ssh/known_hosts");
     SCR::Execute (.target.bash, "echo \"[feed.greenbone.net]:24,[193.108.181.139]:24 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAmVIt4lOPi1lVJfFCtiNjGR4kHj377C6jMY4iaxotYueuGq8l8B1YIMUMLQzaUeaPwOGMZl5mWUT158zaiWK4zOzZarFLey6JrKfrnDZMdCcCneZPBRbMJUxiV1jv4U+/Vp/V1wO6OJ+S9XkodxvN9+vjAhcXspKXcRol30+T9mgilWK+nvSTVEhce+JJYz+gdQFN+1xgkPhjGbXSjHT7zB5fVjWe7TYLGhdqj1U+NTVOcKNn0wMBRGM3T63rKV71KI1hmLdX6+VmVQOCjYpqsFRh0TZadh5cEE5gmPDCnGlXCA9BrilOMSRvsTySs30xN4/Z5RHPWbDS0rwvqBf9Lw==\" >> /root/.ssh/known_hosts");
     sleep (sl);
