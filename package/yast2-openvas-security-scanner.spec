@@ -27,7 +27,7 @@ Source0:        %{name}-%{version}.tar.bz2
 
 Requires:	yast2, openvas-scanner >= 3.0.1
 BuildRequires:	perl-XML-Writer update-desktop-files yast2 yast2-testsuite
-BuildRequires:  yast2-devtools >= 3.0.6
+BuildRequires:  yast2-devtools >= 3.1.10
 
 BuildArchitectures:	noarch
 
